@@ -12,13 +12,14 @@ tmp_tunis=$tmp_dir/tunis
 tmp_libyan=$tmp_dir/libyan
 
 # training data consists of 2 parts: answers and recordings (recited)
-answers_transcripts=$d/transcripts/answers.tsv
-recordings_transcripts=$d/transcripts/recordings.tsv
+answers_transcripts=$d/data/transcripts/answers.tsv
+recordings_transcripts=$d/data/transcripts/recordings.tsv
 
 # location of test data
 cls_rec_tr=$e/cls/data/transcripts/recordings/cls_recordings.tsv
 lfi_rec_tr=$e/lfi/data/transcripts/recordings/lfi_recordings.tsv
 srj_rec_tr=$e/srj/data/transcripts/recordings/srj_recordings.tsv
+mbt_rec_tr=$d/mbt/data/transcripts/recordings/mbt_recordings.tsv
 
 # make acoustic model training  lists
 mkdir -p $tmp_tunis
@@ -28,13 +29,13 @@ mkdir -p $tmp_tunis
 # for recited speech
 # the data collection laptops had names like CTELLONE CTELLTWO ...
 for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
-    find $d/speech/$machine -type f -name "*.wav" | grep Recordings | \
+    find $d/data/speech/$machine -type f -name "*.wav" | grep Recordings | \
 	sort      >> $tmp_tunis/recordings_wav.txt
 done
 
 # get file names for Answers 
 for machine in CTELLFIVE CTELLFOUR CTELLONE CTELLTHREE CTELLTWO; do
-    find $d/speech/$machine -type f -name "*.wav" | grep Answers     | \
+    find $d/data/speech/$machine -type f -name "*.wav" | grep Answers     | \
 	sort >> $tmp_tunis/answers_wav.txt
 done
 
@@ -80,10 +81,21 @@ for s in cls lfi srj; do
 	 -name "*.wav" | grep recordings > $tmp_libyan/$s/recordings_wav.txt
 
     echo "$0: making recordings list for $s"
-    local/libyan_recordings_make_lists.pl \
-	$e/$s/data/transcripts/recordings/${s}_recordings.tsv $s
+    local/test_recordings_make_lists.pl \
+	$e/$s/data/transcripts/recordings/${s}_recordings.tsv $s libyan
 done
 
+# process the Tunisian MSA test data
+
+mkdir -p data/local/tmp/tunis/mbt
+
+    # get list of  wav files
+    find $d/mbt -type f \
+	 -name "*.wav" | grep recordings > $tmp_tunis/mbt/recordings_wav.txt
+
+    echo "$0: making recordings list for mbt"
+    local/test_recordings_make_lists.pl \
+	$d/mbt/data/transcripts/recordings/mbt_recordings.tsv mbt tunis
 
 mkdir -p data/test
 # get the Libyan files
@@ -91,6 +103,10 @@ for s in cls lfi srj; do
     for x in wav.scp utt2spk text; do
         cat     $tmp_libyan/$s/recordings/$x | tr "	" " " >> data/test/$x
     done
+done
+
+for x in wav.scp utt2spk text; do
+    cat     $tmp_tunis/mbt/recordings/$x | tr "	" " " >> data/test/$x
 done
 
 utils/utt2spk_to_spk2utt.pl data/test/utt2spk | sort > data/test/spk2utt
