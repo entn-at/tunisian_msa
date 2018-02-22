@@ -54,7 +54,7 @@ if [ $stage -le 6 ]; then
         fi
 
         steps/make_plp_pitch.sh \
-            --cmd "$train_cmd" --nj 4 data/$fld exp/make_plp_pitch/$fld \
+            --cmd "$train_cmd" --nj 10 data/$fld exp/make_plp_pitch/$fld \
             plp_pitch
 
         utils/fix_data_dir.sh data/$fld
@@ -67,7 +67,7 @@ fi
 
 if [ $stage -le 7 ]; then
     echo "$0: monophone training"
-    steps/train_mono.sh --nj 4 --cmd "$train_cmd" data/train data/lang exp/mono
+    steps/train_mono.sh --nj 10 --cmd "$train_cmd" data/train data/lang exp/mono
 fi
 
 if [ $stage -le 8 ]; then
@@ -77,14 +77,14 @@ if [ $stage -le 8 ]; then
         utils/mkgraph.sh data/lang_test exp/mono exp/mono/graph
 
         # test monophones
-        steps/decode.sh --nj 10  exp/mono/graph data/test exp/mono/decode_test
+        steps/decode.sh --nj 2  exp/mono/graph data/test exp/mono/decode_test
     ) &
 fi
 
 if [ $stage -le 9 ]; then
     # align with monophones
     steps/align_si.sh \
-        --nj 8 --cmd "$train_cmd" data/train data/lang exp/mono exp/mono_ali
+        --nj 10 --cmd "$train_cmd" data/train data/lang exp/mono exp/mono_ali
 fi
 
 if [ $stage -le 10 ]; then
@@ -101,14 +101,14 @@ if [ $stage -le 11 ]; then
         utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
 
         # decode test data with tri1 models
-        steps/decode.sh --nj 10 exp/tri1/graph data/test exp/tri1/decode_test
+        steps/decode.sh --nj 2 exp/tri1/graph data/test exp/tri1/decode_test
     ) &
 fi
 
 if [ $stage -le 12 ]; then
     # align with triphones
     steps/align_si.sh \
-        --nj 8 --cmd "$train_cmd" data/train data/lang exp/tri1 exp/tri1_ali
+        --nj 10 --cmd "$train_cmd" data/train data/lang exp/tri1 exp/tri1_ali
 fi
 
 if [ $stage -le 13 ]; then
@@ -124,14 +124,14 @@ if [ $stage -le 14 ]; then
         utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
 
         # decode  test with tri2b models
-        steps/decode.sh --nj 10  exp/tri2b/graph data/test exp/tri2b/decode_test
+        steps/decode.sh --nj 2  exp/tri2b/graph data/test exp/tri2b/decode_test
     ) &
 fi
 
 if [ $stage -le 15 ]; then
     # align with lda and mllt adapted triphones
     steps/align_si.sh \
-        --use-graphs true --nj 8 --cmd "$train_cmd" data/train data/lang \
+        --use-graphs true --nj 10 --cmd "$train_cmd" data/train data/lang \
         exp/tri2b exp/tri2b_ali
 fi
 
@@ -149,7 +149,7 @@ if [ $stage -le 17 ]; then
 
         # decode test sets with tri3b models
         steps/decode_fmllr.sh \
-            --nj 10 --cmd "$decode_cmd" exp/tri3b/graph data/test \
+            --nj 2 --cmd "$decode_cmd" exp/tri3b/graph data/test \
             exp/tri3b/decode_test
     ) &
 fi
@@ -158,19 +158,7 @@ if [ $stage -le 18 ]; then
     # align with tri3b models
     echo "$0: Starting exp/tri3b_ali"
     steps/align_fmllr.sh \
-        --nj 8 --cmd "$train_cmd" data/train data/lang exp/tri3b exp/tri3b_ali
-fi
-
-if [ $stage -le 19 ]; then
-    (
-        # make decoding graphs for SAT models
-        utils/mkgraph.sh data/lang_test exp/tri3b exp/tri3b/graph
-
-        # decode test set with tri3b models
-        steps/decode_fmllr.sh \
-            --nj 1 --cmd "$decode_cmd" exp/tri3b/graph data/test \
-            exp/tri3b/decode_test
-    ) &
+        --nj 10 --cmd "$train_cmd" data/train data/lang exp/tri3b exp/tri3b_ali
 fi
 
 if [ $stage -le 20 ]; then
