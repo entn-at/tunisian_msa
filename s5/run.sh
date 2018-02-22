@@ -20,7 +20,7 @@ lex=/mnt/disk01/Tunisian_MSA/lexicon.txt
 if [ $stage -le 0 ]; then
     local/prepare_data.sh $data_dir $libyan_src
 fi
-exit
+
 if [ $stage -le 1 ]; then
     # prepare a dictionary
     mkdir -p data/local/dict
