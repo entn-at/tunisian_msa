@@ -3,7 +3,7 @@
 # Copyright 2018 John Morgan
 # Apache 2.0.
 
-# libyan_recordings_make_lists.pl - make acoustic model training lists
+# test_recordings_make_lists.pl - make acoustic model training lists
 
 use strict;
 use warnings;
@@ -14,17 +14,17 @@ use File::Copy;
 use File::Basename;
 
 BEGIN {
-    @ARGV == 2 or croak "USAGE $0 <TRANSCRIPT_FILENAME> <SPEAKER_NAME>
+    @ARGV == 3 or croak "USAGE $0 <TRANSCRIPT_FILENAME> <SPEAKER_NAME> <COUNTRY>
 example:
-$0 /mnt/disk01/Libyan_MSA/srj/data/transcripts/recordings/srj_recordings.tsv srj
+$0 /mnt/disk01/Libyan_MSA/srj/data/transcripts/recordings/srj_recordings.tsv srj libyan
 ";
 }
 
-my ($tr,$spk) = @ARGV;
+my ($tr,$spk,$l) = @ARGV;
 
 open my $I, '<', $tr or croak "problems with $tr";
 
-my $tmp_dir = "data/local/tmp/libyan/$spk";
+my $tmp_dir = "data/local/tmp/$l/$spk";
 
 system "mkdir -p $tmp_dir/recordings";
 
