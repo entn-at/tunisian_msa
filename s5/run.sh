@@ -11,7 +11,7 @@ set -o pipefail
 set u
 
 #   data locations
-data_dir=/mnt/disk01/Tunisian_MSA/data
+data_dir=/mnt/disk01/Tunisian_MSA
 # location of test data 
 libyan_src=/mnt/disk01/Libyan_MSA
 # location of lexicon
@@ -20,7 +20,7 @@ lex=/mnt/disk01/Tunisian_MSA/lexicon.txt
 if [ $stage -le 0 ]; then
     local/prepare_data.sh $data_dir $libyan_src
 fi
-
+exit
 if [ $stage -le 1 ]; then
     # prepare a dictionary
     mkdir -p data/local/dict
