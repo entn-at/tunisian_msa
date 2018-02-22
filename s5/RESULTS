@@ -1,0 +1,13 @@
+%WER 34.34 [ 228 / 664, 8 ins, 83 del, 137 sub ] exp/mono/decode_test/wer_12_0.0
+%WER 33.13 [ 220 / 664, 9 ins, 91 del, 120 sub ] exp/tri2b/decode_test/wer_10_0.0
+%WER 30.72 [ 204 / 664, 7 ins, 62 del, 135 sub ] exp/tri1/decode_test/wer_11_0.0
+%WER 26.20 [ 174 / 664, 8 ins, 62 del, 104 sub ] exp/tri3b/decode_test/wer_15_0.0
+%WER 15.81 [ 105 / 664, 2 ins, 31 del, 72 sub ] exp/chain/tdnn1c_sp/decode_test/wer_12_0.0
+
+| model | WER |
+| mono | 34.34 |
+| tri2b tri mllt lda | 33.13 |
+| tri1 | 30.72 |
+| tri3b mllt lda sat | 26.20 |
+| tdnn chain | 15.81 |
+| tdnn chain online | 13.40 |
