@@ -165,8 +165,3 @@ if [ $stage -le 20 ]; then
     # train and test chain models
     local/chain/run_tdnn.sh
 fi
-
-if [ $stage -le 21 ]; then
-    # train and test chain tdnn lstm models
-    local/chain/run_tdnn_lstm.sh
-fi
