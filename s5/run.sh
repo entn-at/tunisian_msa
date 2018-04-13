@@ -10,17 +10,35 @@ set -e
 set -o pipefail
 set u
 
-#   data locations
-data_dir=/mnt/disk01/Tunisian_MSA
+tmpdir=data/local/tmp
+#   data is on openslr.org
+speech="http://www.openslr.org/resources/46/Tunisian_MSA.tar.gz"
+# where to put the downloaded speech corpus
+download_dir=$tmpdir/speech
+data_dir=$download_dir/Tunisian_MSA/data
+
 # location of test data 
 libyan_src=/mnt/disk01/Libyan_MSA
 # location of lexicon
 lex=/mnt/disk01/Tunisian_MSA/lexicon.txt
 
 if [ $stage -le 0 ]; then
-    local/prepare_data.sh $data_dir $libyan_src
-fi
+    mkdir -p $tmpdir/speech
+    # download the corpus from openslr
+    if [ ! -f $download_dir/Tunisian_MSA.tar.gz ]; then
+	wget -O $download_dir/Tunisian_MSA.tar.gz $speech
 
+	(
+	    #run in shell, so we don't have to remember the path
+	    cd $download_dir
+	    tar -xzf Tunisian_MSA.tar.gz
+	)
+	local/prepare_data.sh $data_dir $libyan_src
+    else
+local/prepare_data.sh $data_dir $libyan_src
+    fi
+fi
+exit
 if [ $stage -le 1 ]; then
     # prepare a dictionary
     mkdir -p data/local/dict
@@ -30,7 +48,7 @@ fi
 
 if [ $stage -le 2 ]; then
     # prepare the lang directory
-    utils/prepare_lang.sh data/local/dict "<UNK>" data/local/lang data/lang
+    utils/prepare_lang.sh data/local/dict "<UNK>" data/local/tmp/lang data/local/lang
 fi
 
 if [ $stage -le 3 ]; then
@@ -40,8 +58,8 @@ fi
 
 if [ $stage -le 4 ]; then
     utils/format_lm.sh \
-        data/lang data/local/lm/lm_threegram.arpa.gz \
-        data/local/dict/lexicon.txt data/lang_test
+        data/local/lang data/local/lm/lm_threegram.arpa.gz \
+        data/local/dict/lexicon.txt data/lang
 fi
 
 if [ $stage -le 6 ]; then
@@ -64,7 +82,7 @@ if [ $stage -le 6 ]; then
         utils/fix_data_dir.sh data/$fld
     done
 fi
-
+exit
 if [ $stage -le 7 ]; then
     echo "$0: monophone training"
     steps/train_mono.sh --nj 10 --cmd "$train_cmd" data/train data/lang exp/mono
