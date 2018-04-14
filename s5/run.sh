@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 . ./cmd.sh
 . ./path.sh
@@ -13,37 +13,52 @@ set u
 tmpdir=data/local/tmp
 #   data is on openslr.org
 speech="http://www.openslr.org/resources/46/Tunisian_MSA.tar.gz"
+lex=http://alt.qcri.org/resources/speech/dictionary/ar-ar_lexicon_2014-03-17.txt.bz2
+
 # where to put the downloaded speech corpus
-download_dir=$tmpdir/speech
-data_dir=$download_dir/Tunisian_MSA/data
+speech_download_dir=$tmpdir/speech
+lex_download_dir=$tmpdir/lex
+speech_data_dir=$speech_download_dir/Tunisian_MSA/data
 
 # location of test data 
 libyan_src=/mnt/disk01/Libyan_MSA
-# location of lexicon
-lex=/mnt/disk01/Tunisian_MSA/lexicon.txt
 
 if [ $stage -le 0 ]; then
     mkdir -p $tmpdir/speech
-    # download the corpus from openslr
-    if [ ! -f $download_dir/Tunisian_MSA.tar.gz ]; then
-	wget -O $download_dir/Tunisian_MSA.tar.gz $speech
+    # download the speech corpus from openslr
+    if [ ! -f $speech_download_dir/Tunisian_MSA.tar.gz ]; then
+	wget -O $speech_download_dir/Tunisian_MSA.tar.gz $speech
 
 	(
 	    #run in shell, so we don't have to remember the path
-	    cd $download_dir
+	    cd $speech_download_dir
 	    tar -xzf Tunisian_MSA.tar.gz
 	)
-	local/prepare_data.sh $data_dir $libyan_src
+	local/prepare_data.sh $speech_data_dir $libyan_src
     else
-local/prepare_data.sh $data_dir $libyan_src
+local/prepare_data.sh $speech_data_dir $libyan_src
     fi
 fi
-exit
+
 if [ $stage -le 1 ]; then
     # prepare a dictionary
-    mkdir -p data/local/dict
+    mkdir -p $lex_download_dir
+    # download the dictionary 
+    if [ ! -f $lex_download_dir/qcri.bz2 ]; then
+	wget -O $lex_download_dir/qcri.bz2 $lex
 
-    local/prepare_dict.sh $lex
+	(
+	    cd $lex_download_dir
+	    bunzip2 qcri.bz2
+	)
+	local/prepare_dict.sh $lex_download_dir/qcri
+    else
+	(
+	    cd $lex_download_dir
+	    bunzip2 qcri.bz2
+	    )
+	local/prepare_dict.sh $lex_download_dir/qcri
+    fi
 fi
 
 if [ $stage -le 2 ]; then
