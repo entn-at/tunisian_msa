@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # Copyright 2018 John Morgan
 # Apache 2.0.
@@ -12,8 +12,8 @@ tmp_tunis=$tmp_dir/tunis
 tmp_libyan=$tmp_dir/libyan
 
 # training data consists of 2 parts: answers and recordings (recited)
-answers_transcripts=$d/data/transcripts/answers.tsv
-recordings_transcripts=$d/data/transcripts/recordings.tsv
+answers_transcripts=$d/transcripts/answers.tsv
+recordings_transcripts=$d/transcripts/recordings.tsv
 
 # location of test data
 cls_rec_tr=$e/cls/data/transcripts/recordings/cls_recordings.tsv
@@ -29,7 +29,7 @@ mkdir -p $tmp_tunis
 # for recited speech
 # the data collection laptops had names like CTELLONE CTELLTWO ...
 for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
-    find $d/data/speech/$machine -type f -name "*.wav" | grep Recordings | \
+    find $d/speech/$machine -type f -name "*.wav" | grep Recordings | \
 	sort      >> $tmp_tunis/recordings_wav.txt
 done
 
