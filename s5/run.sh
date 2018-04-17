@@ -97,7 +97,7 @@ if [ $stage -le 6 ]; then
         utils/fix_data_dir.sh data/$fld
     done
 fi
-exit
+
 if [ $stage -le 7 ]; then
     echo "$0: monophone training"
     steps/train_mono.sh --nj 10 --cmd "$train_cmd" data/train data/lang exp/mono
@@ -107,7 +107,7 @@ if [ $stage -le 8 ]; then
     # monophone evaluation
     (
         # make decoding graph for monophones
-        utils/mkgraph.sh data/lang_test exp/mono exp/mono/graph
+        utils/mkgraph.sh data/lang exp/mono exp/mono/graph
 
         # test monophones
         steps/decode.sh --nj 4  exp/mono/graph data/test exp/mono/decode_test
@@ -131,7 +131,7 @@ if [ $stage -le 11 ]; then
     # test cd gmm hmm models
     # make decoding graphs for tri1
     (
-        utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
+        utils/mkgraph.sh data/lang exp/tri1 exp/tri1/graph
 
         # decode test data with tri1 models
         steps/decode.sh --nj 4 exp/tri1/graph data/test exp/tri1/decode_test
@@ -154,7 +154,7 @@ fi
 if [ $stage -le 14 ]; then
     (
         #  make decoding FSTs for tri2b models
-        utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
+        utils/mkgraph.sh data/lang exp/tri2b exp/tri2b/graph
 
         # decode  test with tri2b models
         steps/decode.sh --nj 4  exp/tri2b/graph data/test exp/tri2b/decode_test
@@ -178,7 +178,7 @@ fi
 if [ $stage -le 17 ]; then
     (
         # make decoding graphs for SAT models
-        utils/mkgraph.sh data/lang_test exp/tri3b exp/tri3b/graph
+        utils/mkgraph.sh data/lang exp/tri3b exp/tri3b/graph
 
         # decode test sets with tri3b models
         steps/decode_fmllr.sh \
