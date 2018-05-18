@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -x
 
 . ./cmd.sh
 . ./path.sh
@@ -11,67 +11,137 @@ set -o pipefail
 set u
 
 tmpdir=data/local/tmp
-#   data is on openslr.org
-speech="http://www.openslr.org/resources/46/Tunisian_MSA.tar.gz"
-lex=http://alt.qcri.org/resources/speech/dictionary/ar-ar_lexicon_2014-03-17.txt.bz2
-
-# where to put the downloaded speech corpus
-speech_download_dir=$tmpdir/speech
-lex_download_dir=$tmpdir/lex
-speech_data_dir=$speech_download_dir/Tunisian_MSA/data
+tmp_tunis=$tmpdir/tunis
+tmp_libyan=$tmpdir/libyan
+data_dir=/mnt/corpora/Tunisian_MSA
 
 # location of test data 
-libyan_src=/mnt/disk01/Libyan_MSA
+libyan_src=/mnt/corpora/Libyan_MSA
+# location of lexicon
+lex=/mnt/corpora/Tunisian_MSA/lexicon.txt
 
 if [ $stage -le 0 ]; then
-    mkdir -p $tmpdir/speech
-    # download the speech corpus from openslr
-    if [ ! -f $speech_download_dir/Tunisian_MSA.tar.gz ]; then
-	wget -O $speech_download_dir/Tunisian_MSA.tar.gz $speech
+    # training data consists of 2 parts: answers and recordings (recited)
+    answers_transcripts=$data_dir/data/transcripts/answers.tsv
+recordings_transcripts=$data_dir/data/transcripts/recordings.tsv
 
-	(
-	    #run in shell, so we don't have to remember the path
-	    cd $speech_download_dir
-	    tar -xzf Tunisian_MSA.tar.gz
-	)
-	local/prepare_data.sh $speech_data_dir $libyan_src
-    else
-local/prepare_data.sh $speech_data_dir $libyan_src
-    fi
-fi
+# location of test data
+cls_rec_tr=$libyan_src/cls/data/transcripts/recordings/cls_recordings.tsv
+lfi_rec_tr=$libyan_src/lfi/data/transcripts/recordings/lfi_recordings.tsv
+srj_rec_tr=$libyan_src/srj/data/transcripts/recordings/srj_recordings.tsv
+mbt_rec_tr=$data_dir/mbt/data/transcripts/recordings/mbt_recordings.tsv
 
-if [ $stage -le 1 ]; then
-    # prepare a dictionary
-    mkdir -p $lex_download_dir
-    # download the dictionary 
-    if [ ! -f $lex_download_dir/qcri.bz2 ]; then
-	wget -O $lex_download_dir/qcri.bz2 $lex
+# make acoustic model training  lists
+mkdir -p $tmp_tunis
 
-	(
-	    cd $lex_download_dir
-	    bunzip2 qcri.bz2
-	)
-	local/prepare_dict.sh $lex_download_dir/qcri
-    else
-	(
-	    cd $lex_download_dir
-	    bunzip2 qcri.bz2
-	    )
-	local/prepare_dict.sh $lex_download_dir/qcri
-    fi
+# get  wav file names
+
+# for recited speech
+# the data collection laptops had names like CTELLONE CTELLTWO ...
+for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
+    find $data_dir/data/speech/$machine -type f -name "*.wav" | grep Recordings | \
+	sort      >> $tmp_tunis/recordings_wav.txt
+done
+
+# get file names for Answers 
+for machine in  CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
+    find $data_dir/data/speech/$machine -type f -name "*.wav" | grep Answers     | \
+	sort >> $tmp_tunis/answers_wav.txt
+done
+
+# make separate transcription lists for answers and recordings
+export LC_ALL=en_US.UTF-8
+local/answers_make_lists.pl $answers_transcripts
+
+utils/fix_data_dir.sh $tmp_tunis/answers
+
+local/recordings_make_lists.pl $recordings_transcripts
+
+utils/fix_data_dir.sh $tmp_tunis/recordings
+
+# consolidate lists
+# acoustic models will be trained on both recited and prompted speech
+mkdir -p $tmp_tunis/lists
+
+for x in wav.scp utt2spk text; do
+    cat $tmp_tunis/answers/$x $tmp_tunis/recordings/$x | \
+	sort > $tmp_tunis/lists/$x
+done
+
+utils/fix_data_dir.sh $tmp_tunis/lists
+
+# get training lists
+mkdir -p data/train
+for x in wav.scp utt2spk text; do
+    sort $tmp_tunis/lists/$x | tr "	" " " > data/train/$x
+done
+
+utils/utt2spk_to_spk2utt.pl data/train/utt2spk | sort > data/train/spk2utt
+
+utils/fix_data_dir.sh data/train
+
+# process the Libyan MSA data
+mkdir -p $tmp_libyan
+
+for s in cls lfi srj; do
+    mkdir -p $tmp_libyan/$s
+
+    # get list of  wav files
+    find $libyan_src/$s -type f \
+	 -name "*.wav" | grep recordings > $tmp_libyan/$s/recordings_wav.txt
+
+    echo "$0: making recordings list for $s"
+    local/test_recordings_make_lists.pl \
+	$libyan_src/$s/data/transcripts/recordings/${s}_recordings.tsv $s libyan
+done
+
+# process the Tunisian MSA test data
+
+mkdir -p $tmp_tunis/mbt
+
+    # get list of  wav files
+    find $data_dir/mbt -type f \
+	 -name "*.wav" | grep recordings > $tmp_tunis/mbt/recordings_wav.txt
+
+    echo "$0: making recordings list for mbt"
+    local/test_recordings_make_lists.pl \
+	$data_dir/mbt/data/transcripts/recordings/mbt_recordings.tsv mbt tunis
+
+mkdir -p data/test
+# get the Libyan files
+for s in cls lfi srj; do
+    for x in wav.scp utt2spk text; do
+        cat     $tmp_libyan/$s/recordings/$x | tr "	" " " >> data/test/$x
+    done
+done
+
+for x in wav.scp utt2spk text; do
+    cat     $tmp_tunis/mbt/recordings/$x | tr "	" " " >> data/test/$x
+done
+
+utils/utt2spk_to_spk2utt.pl data/test/utt2spk | sort > data/test/spk2utt
+
+utils/fix_data_dir.sh data/test
 fi
 
 if [ $stage -le 2 ]; then
+    # prepare a dictionary
+    mkdir -p data/local/dict
+
+    local/prepare_dict.sh $lex
+fi
+
+if [ $stage -le 3 ]; then
     # prepare the lang directory
     utils/prepare_lang.sh data/local/dict "<UNK>" data/local/tmp/lang data/local/lang
 fi
 
-if [ $stage -le 3 ]; then
+if [ $stage -le 4 ]; then
     # prepare lm on training and test transcripts
     local/prepare_lm.sh
 fi
 
-if [ $stage -le 4 ]; then
+if [ $stage -le 5 ]; then
     utils/format_lm.sh \
         data/local/lang data/local/lm/lm_threegram.arpa.gz \
         data/local/dict/lexicon.txt data/lang
