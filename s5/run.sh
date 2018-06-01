@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 . ./cmd.sh
 . ./path.sh
@@ -178,7 +178,7 @@ fi
 
 if [ $stage -le 4 ]; then
     # prepare lm on training and test transcripts
-    # local/prepare_lm.sh
+    local/prepare_lm.sh
     # GALE LM 
     local/gale_train_lms_local.sh
 fi
