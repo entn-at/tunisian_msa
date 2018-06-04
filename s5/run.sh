@@ -203,8 +203,7 @@ if [ $stage -le 7 ]; then
             rm data/$fld/cmvn.scp
         fi
 
-        steps/make_plp_pitch.sh \
-	    --nj 56  data/$fld exp/make_plp_pitch/$fld plp_pitch
+        steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
 
         utils/fix_data_dir.sh data/$fld
 
@@ -216,7 +215,7 @@ fi
 
 if [ $stage -le 8 ]; then
     echo "$0: monophone training"
-    steps/train_mono.sh --nj 56 data/train data/lang exp/mono
+    steps/train_mono.sh data/train data/lang exp/mono
 
     # monophone evaluation
     (
@@ -230,7 +229,7 @@ fi
 
 if [ $stage -le 9 ]; then
     # align with monophones
-    steps/align_si.sh --nj 56 data/train data/lang exp/mono exp/mono_ali
+    steps/align_si.sh data/train data/lang exp/mono exp/mono_ali
 fi
 
 if [ $stage -le 10 ]; then
@@ -252,7 +251,7 @@ fi
 
 if [ $stage -le 12 ]; then
     # align with triphones
-    steps/align_si.sh --nj 56 data/train data/lang exp/tri1 exp/tri1_ali
+    steps/align_si.sh data/train data/lang exp/tri1 exp/tri1_ali
 fi
 
 if [ $stage -le 13 ]; then
@@ -275,7 +274,7 @@ fi
 if [ $stage -le 15 ]; then
     # align with lda and mllt adapted triphones
     steps/align_si.sh \
-        --use-graphs true --nj 56 data/train data/lang exp/tri2b exp/tri2b_ali
+        --use-graphs true data/train data/lang exp/tri2b exp/tri2b_ali
 fi
 
 if [ $stage -le 16 ]; then
@@ -296,7 +295,7 @@ fi
 if [ $stage -le 18 ]; then
     # align with tri3b models
     echo "$0: Starting exp/tri3b_ali"
-    steps/align_fmllr.sh --nj 56 data/train data/lang exp/tri3b exp/tri3b_ali
+    steps/align_fmllr.sh data/train data/lang exp/tri3b exp/tri3b_ali
 fi
 
 if [ $stage -le 20 ]; then
