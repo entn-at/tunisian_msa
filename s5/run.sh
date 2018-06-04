@@ -40,7 +40,7 @@ audio=(
   /mnt/corpora/LDC2014S07
 )
 
-
+lex=/mnt/corpora/Tunisian_MSA/lexicon.txt
 if [ $stage -le 0 ]; then
     # make acoustic model training  lists
     mkdir -p $tmp_tunis
@@ -145,30 +145,30 @@ if [ $stage -le 0 ]; then
 fi
 
 if [ $stage -le 1 ]; then
-    for d in ${audio[@]}; do
-	echo "Checking existence of $d";
-	    [ ! -d "$d" ] && \
-    echo "$0 Data directory (LDC corpus release) does not exist" && \
-    exit 1
-	    done
+    # for d in ${audio[@]}; do
+	# echo "Checking existence of $d";
+	    # [ ! -d "$d" ] && \
+    # echo "$0 Data directory (LDC corpus release) does not exist" && \
+    # exit 1
+	    # done
 
-    local/gale_data_prep_audio.sh  "${audio[@]}" GALE
+    # local/gale_data_prep_audio.sh  "${audio[@]}" GALE
 
     # GALE data
     #get the transcription and remove empty prompts and all noise markers  
-    local/gale_data_prep_txt.sh  "${text[@]}" GALE
-    local/gale_data_prep_split.sh GALE 
-fi
+    # local/gale_data_prep_txt.sh  "${text[@]}" GALE
+    # local/gale_data_prep_split.sh GALE 
+#fi
 
-if [ $stage -le 2 ]; then
+#if [ $stage -le 2 ]; then
     # prepare a dictionary
     mkdir -p data/local/dict
 
-    # local/prepare_dict.sh $lex
+    local/prepare_dict.sh $lex
 
     # get Arabic grapheme dictionaries
     # add silence and UNK
-    local/gale_prep_grapheme_dict.sh
+    # local/gale_prep_grapheme_dict.sh
 fi
 
 if [ $stage -le 3 ]; then
@@ -180,7 +180,7 @@ if [ $stage -le 4 ]; then
     # prepare lm on training and test transcripts
     local/prepare_lm.sh
     # GALE LM 
-    local/gale_train_lms_local.sh
+    # local/gale_train_lms_local.sh
 fi
 
 if [ $stage -le 5 ]; then
@@ -189,10 +189,10 @@ if [ $stage -le 5 ]; then
         data/local/dict/lexicon.txt data/lang
 fi
 
-if [ $stage -le 6 ]; then
+#if [ $stage -le 6 ]; then
         # G compilation, check LG composition
-    local/gale_format_data.sh
-fi
+    # local/gale_format_data.sh
+#fi
 
 if [ $stage -le 7 ]; then
     # extract acoustic features
@@ -204,8 +204,7 @@ if [ $stage -le 7 ]; then
         fi
 
         steps/make_plp_pitch.sh \
-            --cmd "$train_cmd" --nj 10 data/$fld exp/make_plp_pitch/$fld \
-            plp_pitch
+	    --nj 56  data/$fld exp/make_plp_pitch/$fld plp_pitch
 
         utils/fix_data_dir.sh data/$fld
 
@@ -217,7 +216,7 @@ fi
 
 if [ $stage -le 8 ]; then
     echo "$0: monophone training"
-    steps/train_mono.sh --nj 10 data/train data/lang exp/mono
+    steps/train_mono.sh --nj 56 data/train data/lang exp/mono
 
     # monophone evaluation
     (
@@ -231,7 +230,7 @@ fi
 
 if [ $stage -le 9 ]; then
     # align with monophones
-    steps/align_si.sh --nj 10 data/train data/lang exp/mono exp/mono_ali
+    steps/align_si.sh --nj 56 data/train data/lang exp/mono exp/mono_ali
 fi
 
 if [ $stage -le 10 ]; then
@@ -253,7 +252,7 @@ fi
 
 if [ $stage -le 12 ]; then
     # align with triphones
-    steps/align_si.sh --nj 10 data/train data/lang exp/tri1 exp/tri1_ali
+    steps/align_si.sh --nj 56 data/train data/lang exp/tri1 exp/tri1_ali
 fi
 
 if [ $stage -le 13 ]; then
@@ -276,7 +275,7 @@ fi
 if [ $stage -le 15 ]; then
     # align with lda and mllt adapted triphones
     steps/align_si.sh \
-        --use-graphs true --nj 10 data/train data/lang exp/tri2b exp/tri2b_ali
+        --use-graphs true --nj 56 data/train data/lang exp/tri2b exp/tri2b_ali
 fi
 
 if [ $stage -le 16 ]; then
@@ -297,7 +296,7 @@ fi
 if [ $stage -le 18 ]; then
     # align with tri3b models
     echo "$0: Starting exp/tri3b_ali"
-    steps/align_fmllr.sh --nj 10 data/train data/lang exp/tri3b exp/tri3b_ali
+    steps/align_fmllr.sh --nj 56 data/train data/lang exp/tri3b exp/tri3b_ali
 fi
 
 if [ $stage -le 20 ]; then
