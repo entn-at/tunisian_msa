@@ -21,7 +21,7 @@ lex_download_dir=$tmpdir/lex
 speech_data_dir=$speech_download_dir/Tunisian_MSA/data
 
 # location of test data 
-libyan_src=/mnt/disk01/Libyan_MSA
+#libyan_src=/mnt/disk01/Libyan_MSA
 
 if [ $stage -le 0 ]; then
     mkdir -p $tmpdir/speech
@@ -34,9 +34,13 @@ if [ $stage -le 0 ]; then
 	    cd $speech_download_dir
 	    tar -xzf Tunisian_MSA.tar.gz
 	)
-	local/prepare_data.sh $speech_data_dir $libyan_src
+	local/prepare_training_data.sh $speech_data_dir
+
+	# local/prepare_test_data.sh $libyan_src
     else
-local/prepare_data.sh $speech_data_dir $libyan_src
+	local/prepare_training_data.sh $speech_data_dir
+
+	# local/prepare_test_data.sh $libyan_src
     fi
 fi
 
@@ -113,7 +117,7 @@ if [ $stage -le 8 ]; then
         steps/decode.sh --nj 4  exp/mono/graph data/test exp/mono/decode_test
     ) &
 fi
-
+exit
 if [ $stage -le 9 ]; then
     # align with monophones
     steps/align_si.sh \
