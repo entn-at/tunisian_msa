@@ -11,52 +11,45 @@ set -o pipefail
 set u
 
 tmpdir=data/local/tmp
+download_dir=$tmpdir/speech
 tmp_tunis=$tmpdir/tunis
 tmp_libyan=$tmpdir/libyan
-data_dir=/mnt/corpora/Tunisian_MSA
 
+data_dir=$download_dir/Tunisian_MSA/data
 # location of test data 
-libyan_src=/mnt/corpora/Libyan_MSA
+libyan_src=$data_dir/speech/test/Libyan_MSA
 
 # training data consists of 2 parts: answers and recordings (recited)
-answers_transcripts=$data_dir/data/transcripts/answers.tsv
-recordings_transcripts=$data_dir/data/transcripts/recordings.tsv
+answers_transcripts=$data_dir/transcripts/train/answers.tsv
+recordings_transcripts=$data_dir/transcripts/train/recordings.tsv
 
 # location of test data
 cls_rec_tr=$libyan_src/cls/data/transcripts/recordings/cls_recordings.tsv
 lfi_rec_tr=$libyan_src/lfi/data/transcripts/recordings/lfi_recordings.tsv
 srj_rec_tr=$libyan_src/srj/data/transcripts/recordings/srj_recordings.tsv
-mbt_rec_tr=$data_dir/mbt/data/transcripts/recordings/mbt_recordings.tsv
+mbt_rec_tr=$data_dir/transcripts/test/mbt/recordings/mbt_recordings.tsv
 
-text=(
-    /mnt/corpora/LDC2013T17
-    /mnt/corpora/LDC2013T04
-    /mnt/corpora/LDC2014T17
-)
-
-audio=(
-  /mnt/corpora/LDC2013S02
-  /mnt/corpora/LDC2013S07
-  /mnt/corpora/LDC2014S07
-)
-
-lex=/mnt/corpora/Tunisian_MSA/lexicon.txt
 if [ $stage -le 0 ]; then
-    # make acoustic model training  lists
-    mkdir -p $tmp_tunis
+    local/tamsa_download_1.sh
+    fi
 
-    # get  wav file names
+if [ $stage -le 1 ]; then
+  # make acoustic model training  lists
+  mkdir -p $tmp_tunis
 
-    # for recited speech
-    # the data collection laptops had names like CTELLONE CTELLTWO ...
-    for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
-	find $data_dir/data/speech/$machine -type f -name "*.wav" | grep Recordings | \
-	    sort      >> $tmp_tunis/recordings_wav.txt
-    done
+  # get  wav file names
 
-    # get file names for Answers 
-    for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
-	find $data_dir/data/speech/$machine -type f -name "*.wav" | grep Answers     | \
+  # for recited speech
+  # the data collection laptops had names like CTELLONE CTELLTWO ...
+  for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
+      find $data_dir/speech/train/$machine \
+	   -type f -name "*.wav" | grep Recordings | sort      >> \
+							       $tmp_tunis/recordings_wav.txt
+  done
+
+  # get file names for Answers 
+  for machine in CTELLONE CTELLTWO CTELLTHREE CTELLFOUR CTELLFIVE; do
+	find $data_dir/speech/train/$machine -type f -name "*.wav" | grep Answers     | \
 	    sort >> $tmp_tunis/answers_wav.txt
     done
 
@@ -111,12 +104,12 @@ if [ $stage -le 0 ]; then
     mkdir -p $tmp_tunis/mbt
 
     # get list of  wav files
-    find $data_dir/mbt -type f \
+    find $data_dir/speech/test/mbt -type f \
 	 -name "*.wav" | grep recordings > $tmp_tunis/mbt/recordings_wav.txt
 
     echo "$0: making recordings list for mbt"
     local/test_recordings_make_lists.pl \
-	$data_dir/mbt/data/transcripts/recordings/mbt_recordings.tsv mbt tunis
+	$data_dir/transcripts/test/mbt/recordings/mbt_recordings.tsv mbt tunis
 
     mkdir -p data/test
     # get the Libyan files
@@ -135,30 +128,36 @@ if [ $stage -le 0 ]; then
     utils/fix_data_dir.sh data/test
 fi
 
-if [ $stage -le 1 ]; then
-    # prepare a dictionary
-    mkdir -p data/local/dict
-
-    local/prepare_dict.sh $lex
-fi
-
 if [ $stage -le 2 ]; then
-    # prepare the lang directory
-    utils/prepare_lang.sh data/local/dict "<UNK>" data/local/tmp/lang data/local/lang
+  local/qcri_lexicon_download.sh 
+
+  local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
+
+  mkdir -p data/local/dict
 fi
 
 if [ $stage -le 3 ]; then
-    # prepare lm on training and test transcripts
-    local/prepare_lm.sh
+  # prepare a dictionary
+    local/prepare_dict.sh data/local/tmp/dict/qcri_utf8.txt
 fi
 
 if [ $stage -le 4 ]; then
-    utils/format_lm.sh \
-        data/local/lang data/local/lm/lm_threegram.arpa.gz \
-        data/local/dict/lexicon.txt data/lang
+  # prepare the lang directory
+  utils/prepare_lang.sh data/local/dict "<UNK>" data/local/tmp/lang data/local/lang
 fi
 
 if [ $stage -le 5 ]; then
+  # prepare lm on training and test transcripts
+  local/prepare_lm.sh
+fi
+
+if [ $stage -le 5 ]; then
+  utils/format_lm.sh \
+    data/local/lang data/local/lm/lm_threegram.arpa.gz \
+    data/local/dict/lexicon.txt data/lang
+fi
+
+if [ $stage -le 6 ]; then
     # extract acoustic features
     for fld in train test; do
         steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
