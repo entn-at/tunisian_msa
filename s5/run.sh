@@ -30,7 +30,7 @@ srj_rec_tr=$libyan_src/srj/data/transcripts/recordings/srj_recordings.tsv
 mbt_rec_tr=$data_dir/transcripts/test/mbt/recordings/mbt_recordings.tsv
 
 if [ $stage -le 0 ]; then
-    local/tamsa_download_1.sh
+    local/tamsa_download.sh
     fi
 
 if [ $stage -le 1 ]; then
