@@ -1,5 +1,9 @@
 #!/bin/bash 
 
+# Uses the QCRI vowelized Arabic lexicon.
+# Converts the Buckwalter encoding to utf8.
+# Uses the perl module Encode::Arabic::Buckwalter for the conversion.
+
 . ./cmd.sh
 . ./path.sh
 stage=0
@@ -151,13 +155,13 @@ if [ $stage -le 5 ]; then
   local/prepare_lm.sh
 fi
 
-if [ $stage -le 5 ]; then
+if [ $stage -le 6 ]; then
   utils/format_lm.sh \
     data/local/lang data/local/lm/lm_threegram.arpa.gz \
     data/local/dict/lexicon.txt data/lang
 fi
 
-if [ $stage -le 6 ]; then
+if [ $stage -le 7 ]; then
     # extract acoustic features
     for fld in train test; do
         steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
@@ -167,12 +171,12 @@ if [ $stage -le 6 ]; then
     done
 fi
 
-if [ $stage -le 6 ]; then
+if [ $stage -le 8 ]; then
     echo "$0: monophone training"
-    steps/train_mono.sh  data/train data/lang exp/mono
+    steps/train_mono.sh  data/train data/local/lang exp/mono
 fi
 
-if [ $stage -le 7 ]; then
+if [ $stage -le 9 ]; then
     # monophone evaluation
     (
         # make decoding graph for monophones
@@ -183,18 +187,18 @@ if [ $stage -le 7 ]; then
     ) &
 fi
 
-if [ $stage -le 8 ]; then
+if [ $stage -le 10 ]; then
     # align with monophones
     steps/align_si.sh  data/train data/lang exp/mono exp/mono_ali
 fi
 
-if [ $stage -le 9 ]; then
+if [ $stage -le 11 ]; then
     echo "$0: Starting  triphone training in exp/tri1"
     steps/train_deltas.sh \
         --cluster-thresh 100 500 5000 data/train data/lang exp/mono_ali exp/tri1
 fi
 
-if [ $stage -le 10 ]; then
+if [ $stage -le 12 ]; then
     # test cd gmm hmm models
     # make decoding graphs for tri1
     (
