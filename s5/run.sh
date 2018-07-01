@@ -30,13 +30,11 @@ fi
 
 if [ $stage -le 2 ]; then
   local/qcri_lexicon_download.sh 
-
-  local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
 fi
 
 if [ $stage -le 3 ]; then
-  mkdir -p data/local/dict
-
+  mkdir -p $tmpdir/dict
+  local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
   # prepare a dictionary
   local/prepare_dict.sh $tmpdir/dict/qcri_utf8.txt
 fi
