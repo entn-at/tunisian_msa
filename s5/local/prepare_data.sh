@@ -114,3 +114,4 @@ mbt_rec_tr=$data_dir/transcripts/test/mbt/recordings/mbt_recordings.tsv
 
     utils/utt2spk_to_spk2utt.pl data/test/utt2spk | sort > data/test/spk2utt
 
+utils/fix_data_dir.sh data/test
