@@ -40,4 +40,4 @@ echo SIL > data/local/dict/optional_silence.txt
     echo;
 ) >data/local/dict/extra_questions.txt
 
-echo "Finished dictionary preparation."
+echo "$0: Finished dictionary preparation."
