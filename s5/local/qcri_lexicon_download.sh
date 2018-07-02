@@ -15,6 +15,6 @@ if [ ! -f $download_dir/qcri.txt.bz2 ]; then
 
   (
     cd $download_dir
-    bunzip2 qcri.txt.bz2
+    bunzip2 -d qcri.txt.bz2
   )
 fi
