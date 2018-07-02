@@ -57,7 +57,7 @@ fi
 
 if [ $stage -le 7 ]; then
   # extract acoustic features
-  for fld in devtest train test; do
+  for fld in dev devtest train test; do
     steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
     utils/fix_data_dir.sh data/$fld
     steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitchplp_pitch
@@ -77,7 +77,7 @@ if [ $stage -le 9 ]; then
     utils/mkgraph.sh data/lang_test exp/mono exp/mono/graph
 
     # test monophones
-    for x in devtest test; do
+    for x in dev devtest test; do
       steps/decode.sh  exp/mono/graph data/$x exp/mono/decode_${x}
     done
   ) &
@@ -101,7 +101,7 @@ if [ $stage -le 12 ]; then
         utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
 
         # decode test data with tri1 models
-	for x in devtest test; do
+	for x in dev devtest test; do
             steps/decode.sh exp/tri1/graph data/$x exp/tri1/decode_${x}
 	    done
     ) &
@@ -125,7 +125,7 @@ if [ $stage -le 13 ]; then
         utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
 
         # decode  test with tri2b models
-	for x in devtest test; do
+	for x in dev devtest test; do
             steps/decode.sh exp/tri2b/graph data/$x exp/tri2b/decode_${x}
 	    done
     ) &
@@ -148,7 +148,7 @@ if [ $stage -le 16 ]; then
         utils/mkgraph.sh data/lang_test exp/tri3b exp/tri3b/graph
 
         # decode test sets with tri3b models
-	for x in devtest test; do
+	for x in dev devtest test; do
             steps/decode_fmllr.sh exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
     ) &
