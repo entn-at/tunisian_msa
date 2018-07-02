@@ -12,7 +12,7 @@ tmp_libyan=$tmpdir/libyan
 data_dir=$download_dir/Tunisian_MSA/data
 # location of test data 
 libyan_src=$data_dir/speech/test/Libyan_MSA
-libyan_arl_data=/mnt/disk01/Libyan_MSA_ARL
+libyan_arl_data=$(pwd)/Libyan_MSA_ARL
 
 # process the Libyan MSA dev answers data
 # get list of  answers wav files
