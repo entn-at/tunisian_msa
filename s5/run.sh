@@ -60,7 +60,7 @@ if [ $stage -le 7 ]; then
   for fld in dev devtest train test; do
     steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
     utils/fix_data_dir.sh data/$fld
-    steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitchplp_pitch
+    steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/$fld
   done
 fi
