@@ -45,7 +45,6 @@ my %p = ();
 LINEA: while ( my $line = <$I> ) {
     chomp $line;
     my ($s,$sent) = split /\t/, $line, 2;
-
     $p{$s} = $sent;
 }
 
@@ -63,9 +62,9 @@ open my $T, '+>', $t or croak "problem with $t $!";
      my $b = basename $line, ".wav";
      my $s = $dirs[-1];
      my ($spk,$m,$uttid) = split /\_/, $b, 3;
-
+     my $uid = $spk . '_' . $m;
      if ( exists $p{$b} ) {
-	 print $T "$spk\t$p{$b}\n";
+	 print $T "$b\t$p{$b}\n";
      } elsif ( defined $s ) {
 	 warn  "problem\t$s";
 	 next LINE;
@@ -73,8 +72,8 @@ open my $T, '+>', $t or croak "problem with $t $!";
 	 croak "$line";
      }
 
-     print $O "$spk sox $line -t wav - |\n";
-	print $U "$b\t$spk\n";
+     print $O "$b sox $line -t wav - |\n";
+	print $U "$b\t$uid\n";
 }
 close $T;
 close $O;
