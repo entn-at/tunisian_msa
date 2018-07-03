@@ -61,18 +61,19 @@ open my $T, '+>', $t or croak "problem with $t $!";
      my @dirs = split /\//, $directories;
      my $b = basename $line, ".wav";
      my $s = $dirs[-1];
-     my $rid = $s . '_' . $b;
+     my $rid = $s . '_' . 'recording' . '_' . $b;
+     my $uid = $s . '_' . 'recording';
      if ( exists $p{$b} ) {
 	 print $T "$rid\t$p{$b}\n";
-     } elsif ( defined $rid ) {
-	 warn  "problem\t$rid";
+     } elsif ( defined $s ) {
+	 warn  "problem\t$s";
 	 next LINE;
      } else {
 	 croak "$line";
      }
 
      print $O "$rid sox $line -t wav - |\n";
-	print $U "$rid\t${s}_b\n";
+	print $U "$rid\t$uid\n";
 }
 close $T;
 close $O;
