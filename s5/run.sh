@@ -1,5 +1,6 @@
 #!/bin/bash 
 
+# Trains on 11 hours of speechfrom CTELL{ONE,TWO,THREE,FOUR,FIVE}
 # Uses the QCRI vowelized Arabic lexicon.
 # Converts the Buckwalter encoding to utf8.
 # Uses the perl module Encode::Arabic::Buckwalter for the conversion.
@@ -78,7 +79,8 @@ if [ $stage -le 9 ]; then
 
     # test monophones
     for x in dev devtest test; do
-      steps/decode.sh  exp/mono/graph data/$x exp/mono/decode_${x}
+      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
+      steps/decode.sh  --nj $n exp/mono/graph data/$x exp/mono/decode_${x}
     done
   ) &
 fi
@@ -95,72 +97,75 @@ if [ $stage -le 11 ]; then
 fi
 
 if [ $stage -le 12 ]; then
-    # test cd gmm hmm models
-    # make decoding graphs for tri1
-    (
-        utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
+  # test cd gmm hmm models
+  # make decoding graphs for tri1
+  (
+    utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
 
-        # decode test data with tri1 models
-	for x in dev devtest test; do
-            steps/decode.sh exp/tri1/graph data/$x exp/tri1/decode_${x}
+    # decode test data with tri1 models
+    for x in dev devtest test; do
+      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
+      steps/decode.sh --nj $n exp/tri1/graph data/$x exp/tri1/decode_${x}
 	    done
     ) &
 fi
 
-if [ $stage -le 11 ]; then
+if [ $stage -le 13 ]; then
     # align with triphones
     steps/align_si.sh  data/train data/lang exp/tri1 exp/tri1_ali
 fi
 
-if [ $stage -le 12 ]; then
+if [ $stage -le 14 ]; then
     echo "$0: Starting (lda_mllt) triphone training in exp/tri2b"
     steps/train_lda_mllt.sh \
-        --splice-opts "--left-context=3 --right-context=3" 700 8000 \
+        --splice-opts "--left-context=3 --right-context=3" 500 5000 \
         data/train data/lang exp/tri1_ali exp/tri2b
 fi
 
-if [ $stage -le 13 ]; then
-    (
-        #  make decoding FSTs for tri2b models
-        utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
+if [ $stage -le 15 ]; then
+  (
+    #  make decoding FSTs for tri2b models
+    utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
 
-        # decode  test with tri2b models
-	for x in dev devtest test; do
-            steps/decode.sh exp/tri2b/graph data/$x exp/tri2b/decode_${x}
-	    done
-    ) &
+    # decode  test with tri2b models
+    for x in dev devtest test; do
+      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
+      steps/decode.sh --nj $n exp/tri2b/graph data/$x exp/tri2b/decode_${x}
+    done
+  ) &
 fi
 
-if [ $stage -le 14 ]; then
+if [ $stage -le 16 ]; then
     # align with lda and mllt adapted triphones
     steps/align_si.sh \
 	--use-graphs true data/train data/lang exp/tri2b exp/tri2b_ali
 fi
 
-if [ $stage -le 15 ]; then
+if [ $stage -le 17 ]; then
     echo "$0: Starting (SAT) triphone training in exp/tri3b"
-    steps/train_sat.sh 800 10000 data/train data/lang exp/tri2b_ali exp/tri3b
+    steps/train_sat.sh 800 8000 data/train data/lang exp/tri2b_ali exp/tri3b
 fi
 
-if [ $stage -le 16 ]; then
+if [ $stage -le 18 ]; then
     (
         # make decoding graphs for SAT models
         utils/mkgraph.sh data/lang_test exp/tri3b exp/tri3b/graph
 
         # decode test sets with tri3b models
 	for x in dev devtest test; do
-            steps/decode_fmllr.sh exp/tri3b/graph data/$x exp/tri3b/decode_${x}
+	    n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
+            steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
     ) &
 fi
 
-if [ $stage -le 17 ]; then
+if [ $stage -le 19 ]; then
     # align with tri3b models
     echo "$0: Starting exp/tri3b_ali"
     steps/align_fmllr.sh data/train data/lang exp/tri3b exp/tri3b_ali
 fi
 
-if [ $stage -le 19 ]; then
+if [ $stage -le 20 ]; then
     # train and test chain models
     local/chain/run_tdnn.sh
 fi
