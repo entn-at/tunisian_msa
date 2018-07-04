@@ -4,7 +4,7 @@
 # Uses the QCRI vowelized Arabic lexicon.
 # Converts the Buckwalter encoding to utf8.
 # Uses the perl module Encode::Arabic::Buckwalter for the conversion.
-
+# On Mac OSX use cpanm (cpanminus) to install perl module.
 . ./cmd.sh
 . ./path.sh
 stage=0
@@ -18,6 +18,9 @@ set u
 # Do not change tmpdir, other scripts under local depend on it
 tmpdir=data/local/tmp
 
+# The dev set is not publically available
+dev_available=false
+
 if [ $stage -le 0 ]; then
   # Downloads archive to this script's directory
   local/tamsa_download.sh
@@ -26,15 +29,18 @@ fi
 # preparation stages will store files under data/
 # Delete the entire data directory when restarting.
 if [ $stage -le 1 ]; then
-  local/prepare_data.sh
+    local/prepare_data.sh
+    if [ $dev_available ]; then
+	local/prepare_dev_data.sh
+	fi
 fi
 
 if [ $stage -le 2 ]; then
+  mkdir -p $tmpdir/dict
   local/qcri_lexicon_download.sh 
 fi
 
 if [ $stage -le 3 ]; then
-  mkdir -p $tmpdir/dict
   local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
   # prepare a dictionary
   local/prepare_dict.sh $tmpdir/dict/qcri_utf8.txt
@@ -58,12 +64,19 @@ fi
 
 if [ $stage -le 7 ]; then
   # extract acoustic features
-  for fld in dev devtest train test; do
+  for fld in devtest train test; do
     steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
     utils/fix_data_dir.sh data/$fld
     steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/$fld
   done
+
+  if [ $dev_available ]; then
+    steps/make_plp_pitch.sh data/dev exp/make_plp_pitch/dev plp_pitch
+    utils/fix_data_dir.sh data/dev
+    steps/compute_cmvn_stats.sh data/dev exp/make_plp_pitch plp_pitch
+    utils/fix_data_dir.sh data/dev
+fi
 fi
 
 if [ $stage -le 8 ]; then
@@ -78,10 +91,15 @@ if [ $stage -le 9 ]; then
     utils/mkgraph.sh data/lang_test exp/mono exp/mono/graph
 
     # test monophones
-    for x in dev devtest test; do
+    for x in devtest test; do
       n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
       steps/decode.sh  --nj $n exp/mono/graph data/$x exp/mono/decode_${x}
     done
+
+    if [ $dev_available ]; then
+	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
+	steps/decode.sh  --nj $n exp/mono/graph data/dev exp/mono/decode_dev
+fi
   ) &
 fi
 
@@ -103,10 +121,15 @@ if [ $stage -le 12 ]; then
     utils/mkgraph.sh data/lang_test exp/tri1 exp/tri1/graph
 
     # decode test data with tri1 models
-    for x in dev devtest test; do
+    for x in devtest test; do
       n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
       steps/decode.sh --nj $n exp/tri1/graph data/$x exp/tri1/decode_${x}
-	    done
+    done
+
+    if [ $dev_available ]; then
+	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
+	steps/decode.sh --nj $n exp/tri1/graph data/dev exp/tri1/decode_dev
+	fi
     ) &
 fi
 
@@ -128,11 +151,16 @@ if [ $stage -le 15 ]; then
     utils/mkgraph.sh data/lang_test exp/tri2b exp/tri2b/graph
 
     # decode  test with tri2b models
-    for x in dev devtest test; do
+    for x in devtest test; do
       n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
       steps/decode.sh --nj $n exp/tri2b/graph data/$x exp/tri2b/decode_${x}
     done
-  ) &
+
+    if [ $dev_available ]; then
+	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
+      steps/decode.sh --nj $n exp/tri2b/graph data/dev exp/tri2b/decode_dev
+
+  fi) &
 fi
 
 if [ $stage -le 16 ]; then
@@ -152,10 +180,15 @@ if [ $stage -le 18 ]; then
         utils/mkgraph.sh data/lang_test exp/tri3b exp/tri3b/graph
 
         # decode test sets with tri3b models
-	for x in dev devtest test; do
+	for x in devtest test; do
 	    n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
             steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
+
+	if [ $dev_available ]; then
+	    n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
+            steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/dev exp/tri3b/decode_dev
+	    fi
     ) &
 fi
 
