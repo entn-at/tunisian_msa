@@ -19,7 +19,7 @@ set u
 tmpdir=data/local/tmp
 
 # The dev set is not publically available
-dev_available=false
+dev_available=1
 
 if [ $stage -le 0 ]; then
   # Downloads archive to this script's directory
@@ -30,7 +30,7 @@ fi
 # Delete the entire data directory when restarting.
 if [ $stage -le 1 ]; then
     local/prepare_data.sh
-    if [ $dev_available ]; then
+    if [ $dev_available == 0 ]; then
 	local/prepare_dev_data.sh
 	fi
 fi
@@ -71,7 +71,7 @@ if [ $stage -le 7 ]; then
     utils/fix_data_dir.sh data/$fld
   done
 
-  if [ $dev_available ]; then
+  if [ $dev_available == 0 ]; then
     steps/make_plp_pitch.sh data/dev exp/make_plp_pitch/dev plp_pitch
     utils/fix_data_dir.sh data/dev
     steps/compute_cmvn_stats.sh data/dev exp/make_plp_pitch plp_pitch
@@ -96,7 +96,7 @@ if [ $stage -le 9 ]; then
       steps/decode.sh  --nj $n exp/mono/graph data/$x exp/mono/decode_${x}
     done
 
-    if [ $dev_available ]; then
+    if [ $dev_available == 0 ]; then
 	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
 	steps/decode.sh  --nj $n exp/mono/graph data/dev exp/mono/decode_dev
 fi
@@ -126,7 +126,7 @@ if [ $stage -le 12 ]; then
       steps/decode.sh --nj $n exp/tri1/graph data/$x exp/tri1/decode_${x}
     done
 
-    if [ $dev_available ]; then
+    if [ $dev_available == 0 ]; then
 	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
 	steps/decode.sh --nj $n exp/tri1/graph data/dev exp/tri1/decode_dev
 	fi
@@ -156,7 +156,7 @@ if [ $stage -le 15 ]; then
       steps/decode.sh --nj $n exp/tri2b/graph data/$x exp/tri2b/decode_${x}
     done
 
-    if [ $dev_available ]; then
+    if [ $dev_available == 0 ]; then
 	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
       steps/decode.sh --nj $n exp/tri2b/graph data/dev exp/tri2b/decode_dev
 
@@ -185,7 +185,7 @@ if [ $stage -le 18 ]; then
             steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
 
-	if [ $dev_available ]; then
+	if [ $dev_available == 0 ]; then
 	    n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
             steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/dev exp/tri3b/decode_dev
 	    fi
