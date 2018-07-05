@@ -64,15 +64,17 @@ fi
 
 if [ $stage -le 7 ]; then
   # extract acoustic features
-  for fld in devtest train test; do
-    steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
+    for fld in devtest train test; do
+	nnpk=$(wc -l < data/$fld/spk2utt)
+    steps/make_plp_pitch.sh --nj $nspk data/$fld exp/make_plp_pitch/$fld plp_pitch
     utils/fix_data_dir.sh data/$fld
     steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/$fld
   done
 
-  if [ $dev_available == 0 ]; then
-    steps/make_plp_pitch.sh data/dev exp/make_plp_pitch/dev plp_pitch
+    if [ $dev_available == 0 ]; then
+	nnpk=$(wc -l < data/dev/spk2utt)
+	    steps/make_plp_pitch.sh --nj $nspk data/dev exp/make_plp_pitch/dev plp_pitch
     utils/fix_data_dir.sh data/dev
     steps/compute_cmvn_stats.sh data/dev exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/dev
@@ -92,13 +94,13 @@ if [ $stage -le 9 ]; then
 
     # test monophones
     for x in devtest test; do
-      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
-      steps/decode.sh  --nj $n exp/mono/graph data/$x exp/mono/decode_${x}
+      nnpk=$(wc -l < data/$x/spk2utt)
+      steps/decode.sh  --nj $nspk exp/mono/graph data/$x exp/mono/decode_${x}
     done
 
     if [ $dev_available == 0 ]; then
-	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
-	steps/decode.sh  --nj $n exp/mono/graph data/dev exp/mono/decode_dev
+	nnpk=$(wc -l < data/$x/spk2utt)
+	steps/decode.sh  --nj $nspk exp/mono/graph data/dev exp/mono/decode_dev
 fi
   ) &
 fi
@@ -122,13 +124,13 @@ if [ $stage -le 12 ]; then
 
     # decode test data with tri1 models
     for x in devtest test; do
-      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
-      steps/decode.sh --nj $n exp/tri1/graph data/$x exp/tri1/decode_${x}
+      nnpk=$(wc -l < data/$x/spk2utt)
+      steps/decode.sh --nj $nspk exp/tri1/graph data/$x exp/tri1/decode_${x}
     done
 
     if [ $dev_available == 0 ]; then
-	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
-	steps/decode.sh --nj $n exp/tri1/graph data/dev exp/tri1/decode_dev
+	nnpk=$(wc -l < data/$x/spk2utt)
+	steps/decode.sh --nj $nspk exp/tri1/graph data/dev exp/tri1/decode_dev
 	fi
     ) &
 fi
@@ -152,13 +154,13 @@ if [ $stage -le 15 ]; then
 
     # decode  test with tri2b models
     for x in devtest test; do
-      n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
-      steps/decode.sh --nj $n exp/tri2b/graph data/$x exp/tri2b/decode_${x}
+      nnpk=$(wc -l < data/$x/spk2utt)
+      steps/decode.sh --nj $nspk exp/tri2b/graph data/$x exp/tri2b/decode_${x}
     done
 
     if [ $dev_available == 0 ]; then
-	n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
-      steps/decode.sh --nj $n exp/tri2b/graph data/dev exp/tri2b/decode_dev
+	nnpk=$(wc -l < data/$x/spk2utt)
+      steps/decode.sh --nj $nspk exp/tri2b/graph data/dev exp/tri2b/decode_dev
 
   fi) &
 fi
@@ -181,13 +183,13 @@ if [ $stage -le 18 ]; then
 
         # decode test sets with tri3b models
 	for x in devtest test; do
-	    n=$(wc -l data/$x/spk2utt | cut -f 1 -d " ")
-            steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/$x exp/tri3b/decode_${x}
+	    nnpk=$(wc -l < data/$x/spk2utt)
+            steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
 
 	if [ $dev_available == 0 ]; then
-	    n=$(wc -l data/dev/spk2utt | cut -f 1 -d " ")
-            steps/decode_fmllr.sh --nj $n exp/tri3b/graph data/dev exp/tri3b/decode_dev
+	    nnpk=$(wc -l < data/$x/spk2utt)
+            steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/dev exp/tri3b/decode_dev
 	    fi
     ) &
 fi
