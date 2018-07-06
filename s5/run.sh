@@ -183,12 +183,12 @@ if [ $stage -le 18 ]; then
 
         # decode test sets with tri3b models
 	for x in devtest test; do
-	    nnpk=$(wc -l < data/$x/spk2utt)
+	    nspk=$(wc -l < data/$x/spk2utt)
             steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
 
 	if [ $dev_available == 0 ]; then
-	    nnpk=$(wc -l < data/$x/spk2utt)
+	    nspk=$(wc -l < data/dev/spk2utt)
             steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/dev exp/tri3b/decode_dev
 	    fi
     ) &
