@@ -30,7 +30,7 @@ fi
 # Delete the entire data directory when restarting.
 if [ $stage -le 1 ]; then
     local/prepare_data.sh
-    if [ $dev_available ]; then
+    if [ $dev_available = true ]; then
 	local/prepare_dev_data.sh
 	fi
 fi
@@ -71,7 +71,7 @@ if [ $stage -le 7 ]; then
     utils/fix_data_dir.sh data/$fld
   done
 
-  if [ $dev_available ]; then
+  if [ $dev_available = true ]; then
     steps/make_plp_pitch.sh data/dev exp/make_plp_pitch/dev plp_pitch
     utils/fix_data_dir.sh data/dev
     steps/compute_cmvn_stats.sh data/dev exp/make_plp_pitch plp_pitch
