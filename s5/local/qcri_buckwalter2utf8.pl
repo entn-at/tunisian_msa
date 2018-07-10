@@ -7,10 +7,9 @@ use Carp;
 
 use Encode::Arabic::Buckwalter;         # imports just like 'use Encode' would, plus more
 
-my $bd = "data/local/tmp/dict/qcri.txt";
-my $ud = "data/local/tmp/dict/qcri_utf8.txt";
+my $bw_dict = "qcri.txt";
 
-open my $B, '<', $bd or croak "Problem with $bd $!";
+open my $B, '<', $bw_dict or croak "Problem with $bw_dict $!";
 
  LINE: while ( my $line = <$B> ) {
      chomp $line;

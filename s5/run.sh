@@ -19,31 +19,32 @@ set u
 tmpdir=data/local/tmp
 
 # The dev set is not publically available
-dev_available=false
+dev_available=true
 
 if [ $stage -le 0 ]; then
   # Downloads archive to this script's directory
-  local/tamsa_download.sh
+    local/tamsa_download.sh
+
+    local/qcri_lexicon_download.sh
+
+    local/subs_download.sh
 fi
 
 # preparation stages will store files under data/
 # Delete the entire data directory when restarting.
 if [ $stage -le 1 ]; then
     local/prepare_data.sh
-
-    if [ $dev_available = true ]; then
+    if [ $dev_available=true ]; then
 	local/prepare_dev_data.sh
 	fi
 fi
 
 if [ $stage -le 2 ]; then
   mkdir -p $tmpdir/dict
-  local/qcri_lexicon_download.sh 
+  local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
 fi
 
 if [ $stage -le 3 ]; then
-  local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
-  # prepare a dictionary
   local/prepare_dict.sh $tmpdir/dict/qcri_utf8.txt
 fi
 
@@ -53,31 +54,30 @@ if [ $stage -le 4 ]; then
 fi
 
 if [ $stage -le 5 ]; then
-  # prepare lm on training and test transcripts
-  local/prepare_lm.sh
+  echo "Preparing the subs data for lm training."
+  local/subs_prepare_data.pl 
+
+  local/prepare_lm.sh  $tmpdir/subs/lm/in_vocabulary.txt
 fi
 
 if [ $stage -le 6 ]; then
+  echo "Making grammar fst."
   utils/format_lm.sh \
-    data/lang data/local/lm/lm_threegram.arpa.gz \
-    data/local/dict/lexicon.txt data/lang_test
+    data/lang data/local/lm/trigram.arpa.gz data/local/dict/lexicon.txt \
+    data/lang_test
 fi
 
 if [ $stage -le 7 ]; then
   # extract acoustic features
-    for fld in devtest train test; do
-	nspk=$(wc -l < data/$fld/spk2utt)
-    steps/make_plp_pitch.sh --nj $nspk data/$fld exp/make_plp_pitch/$fld plp_pitch
+  for fld in devtest train test; do
+    steps/make_plp_pitch.sh data/$fld exp/make_plp_pitch/$fld plp_pitch
     utils/fix_data_dir.sh data/$fld
     steps/compute_cmvn_stats.sh data/$fld exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/$fld
   done
 
-  if [ $dev_available = true ]; then
+  if [ $dev_available=true ]; then
     steps/make_plp_pitch.sh data/dev exp/make_plp_pitch/dev plp_pitch
-	nspk=$(wc -l < data/dev/spk2utt)
-	    steps/make_plp_pitch.sh --nj $nspk data/dev exp/make_plp_pitch/dev plp_pitch
->>>>>>> 6f420db124f69f71b23d6bbca5665274ecc5d2d7
     utils/fix_data_dir.sh data/dev
     steps/compute_cmvn_stats.sh data/dev exp/make_plp_pitch plp_pitch
     utils/fix_data_dir.sh data/dev
@@ -101,8 +101,8 @@ if [ $stage -le 9 ]; then
       steps/decode.sh  --nj $nspk exp/mono/graph data/$x exp/mono/decode_${x}
     done
 
-    if [ $dev_available == 0 ]; then
-	nspk=$(wc -l < data/$x/spk2utt)
+    if [ $dev_available=true ]; then
+	nspk=$(wc -l < data/dev/spk2utt)
 	steps/decode.sh  --nj $nspk exp/mono/graph data/dev exp/mono/decode_dev
 fi
   ) &
@@ -116,7 +116,7 @@ fi
 if [ $stage -le 11 ]; then
     echo "$0: Starting  triphone training in exp/tri1"
     steps/train_deltas.sh \
-        --cluster-thresh 100 500 5000 data/train data/lang exp/mono_ali exp/tri1
+        --boost-silence 1.25 1000 6000 data/train data/lang exp/mono_ali exp/tri1
 fi
 
 if [ $stage -le 12 ]; then
@@ -131,8 +131,8 @@ if [ $stage -le 12 ]; then
       steps/decode.sh --nj $nspk exp/tri1/graph data/$x exp/tri1/decode_${x}
     done
 
-    if [ $dev_available == 0 ]; then
-	nspk=$(wc -l < data/$x/spk2utt)
+    if [ $dev_available=true ]; then
+	nspk=$(wc -l < data/dev/spk2utt)
 	steps/decode.sh --nj $nspk exp/tri1/graph data/dev exp/tri1/decode_dev
 	fi
     ) &
@@ -161,8 +161,8 @@ if [ $stage -le 15 ]; then
       steps/decode.sh --nj $nspk exp/tri2b/graph data/$x exp/tri2b/decode_${x}
     done
 
-    if [ $dev_available == 0 ]; then
-	nnpk=$(wc -l < data/$x/spk2utt)
+    if [ $dev_available=true ]; then
+	nspk=$(wc -l < data/dev/spk2utt)
       steps/decode.sh --nj $nspk exp/tri2b/graph data/dev exp/tri2b/decode_dev
 
   fi) &
@@ -190,7 +190,7 @@ if [ $stage -le 18 ]; then
             steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/$x exp/tri3b/decode_${x}
 	done
 
-	if [ $dev_available == 0 ]; then
+	if [ $dev_available=true ]; then
 	    nspk=$(wc -l < data/dev/spk2utt)
             steps/decode_fmllr.sh --nj $nspk exp/tri3b/graph data/dev exp/tri3b/decode_dev
 	    fi

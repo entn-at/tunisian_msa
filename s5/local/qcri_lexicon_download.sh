@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 # Copyright 2018 John Morgan
 # Apache 2.0.
@@ -9,7 +9,7 @@ tmpdir=data/local/tmp
 # where to put the downloaded speech corpus
 downloaddir=$(pwd)
 # Where to put the uncompressed file
-datadir=$tmpdir/dict
+datadir=$(pwd)
 # end of configuration variable settings
 
 # download the corpus 

@@ -7,34 +7,42 @@
 set -e
 . ./path.sh
 stage=0
+nsegs=100000;  # limit the number of training segments
 
 . ./utils/parse_options.sh
-
 
 if [ ! -d data/local/lm ]; then
     mkdir -p data/local/lm
 fi
 
-if [ $stage -le 0 ]; then
-    # use only training prompts
-    cut -f 2 data/train/text > data/local/lm/training_text.txt
-    # append the test text too
-    cut -f 2 data/test/text >> data/local/lm/training_text.txt
-    corpus=data/local/lm/training_text.txt
+corpus=$1
 
-    ngram-count \
-        -order 3 \
-        -interpolate \
-        -unk \
-        -map-unk "<UNK>" \
-        -limit-vocab \
-        -text $corpus \
-        -lm data/local/lm/lm_threegram.arpa || exit 1;
-
-    if [ -e "data/local/lm/lm_threegram.arpa.gz" ]; then
-        rm data/local/lm/lm_threegram.arpa.gz
-    fi
-
-    gzip \
-        data/local/lm/lm_threegram.arpa
+if [ ! -f $corpus ]; then
+  echo "$0: input data $corpus not found."
+  exit 1
 fi
+
+shuf -n $nsegs -o data/local/lm/train.txt < $corpus
+
+if ! command ngram-count >/dev/null; then
+  if uname -a | grep 64 >/dev/null; then # some kind of 64 bit...
+    sdir=$KALDI_ROOT/tools/srilm/bin/i686-m64
+  else
+    sdir=$KALDI_ROOT/tools/srilm/bin/i686
+  fi
+  if [ -f $sdir/ngram-count ]; then
+    echo Using SRILM tools from $sdir
+    export PATH=$PATH:$sdir
+  else
+    echo You appear to not have SRILM tools installed, either on your path,
+    echo or installed in $sdir.  See tools/install_srilm.sh for installation
+    echo instructions.
+    exit 1
+  fi
+fi
+
+
+ngram-count -order 3 -interpolate -unk -map-unk "<UNK>" \
+    -limit-vocab -text data/local/lm/train.txt -lm data/local/lm/trigram.arpa || exit 1;
+
+gzip -f data/local/lm/trigram.arpa
