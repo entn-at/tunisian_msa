@@ -12,7 +12,6 @@ data_dir=$download_dir/Tunisian_MSA/data
 # location of test data 
 libyan_src=$data_dir/speech/test/Libyan_MSA
 libyan_arl_data=$(pwd)/Libyan_MSA_ARL
-
 # end of configuration variable settings
 
 # process the Libyan MSA dev answers data
