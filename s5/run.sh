@@ -21,7 +21,7 @@ tmpdir=data/local/tmp
 # The dev set is not publically available
 dev_available=true
 
-if [ $stage -le 0 ]; then
+if [ $stage -le -1 ]; then
   # Downloads archive to this script's directory
     local/tamsa_download.sh
 
@@ -32,31 +32,34 @@ fi
 
 # preparation stages will store files under data/
 # Delete the entire data directory when restarting.
-if [ $stage -le 1 ]; then
+if [ $stage -le 0 ]; then
     local/prepare_data.sh
     if [ $dev_available=true ]; then
 	local/prepare_dev_data.sh
 	fi
 fi
 
-if [ $stage -le 2 ]; then
+if [ $stage -le 1 ]; then
   mkdir -p $tmpdir/dict
   local/qcri_buckwalter2utf8.pl > $tmpdir/dict/qcri_utf8.txt
 fi
 
-if [ $stage -le 3 ]; then
+if [ $stage -le 2 ]; then
   local/prepare_dict.sh $tmpdir/dict/qcri_utf8.txt
 fi
 
-if [ $stage -le 4 ]; then
+if [ $stage -le 3 ]; then
   # prepare the lang directory
   utils/prepare_lang.sh data/local/dict "<UNK>" data/local/lang data/lang
 fi
 
-if [ $stage -le 5 ]; then
+if [ $stage -le 4 ]; then
   echo "Preparing the subs data for lm training."
   local/subs_prepare_data.pl 
+fi
 
+if [ $stage -le 5 ]; then
+  echo "lm training."
   local/prepare_lm.sh  $tmpdir/subs/lm/in_vocabulary.txt
 fi
 
